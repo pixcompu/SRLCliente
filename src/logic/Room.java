@@ -15,17 +15,6 @@ public class Room {
         setUpSeats();
     }
     
-    public void changeSeatState(int row, int column, int newState){
-        boolean isValidLocation = 
-                (row < rows) & (column < columns) & (row >= 0) & (column >= 0);
-        
-        if( isValidLocation ){
-            seats[row][column] = newState;
-        }else{
-            System.out.println("Bastard!!!!");
-        }
-    }
-    
     public int[][] getSeats() {
         return seats;
     }

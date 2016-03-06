@@ -1,6 +1,5 @@
 package ui;
 
-import com.sun.java.swing.plaf.motif.MotifBorders;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -11,6 +10,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
+import java.util.Random;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -21,9 +21,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
-import logic.Cinema;
 import logic.CinemaFunction;
+import logic.CinemaManager;
 import logic.Movie;
 import logic.Room;
 
@@ -31,19 +30,21 @@ import logic.Room;
  *
  * @author PIX
  */
-public class Functions extends javax.swing.JFrame {
+public class FormCinemaFunctions extends javax.swing.JFrame implements ActionListener {
 
     /**
      * Creates new form Functions
      */
-    public Functions() {
+    public FormCinemaFunctions() {
         initComponents();
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(screenSize);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.funtionListArea.setBackground(Color.BLUE.darker().darker().darker());
-        
-        addDummyFunctions();
+
+        CinemaManager cinemaManager = getDummyCinemaManager();
+        Iterator<CinemaFunction> functions = cinemaManager.getAll();
+        showFunctions(functions);
     }
 
     /**
@@ -104,20 +105,21 @@ public class Functions extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Functions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(FormCinemaFunctions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Functions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(FormCinemaFunctions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Functions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(FormCinemaFunctions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Functions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(FormCinemaFunctions.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Functions().setVisible(true);
+                new FormCinemaFunctions().setVisible(true);
             }
         });
     }
@@ -127,30 +129,27 @@ public class Functions extends javax.swing.JFrame {
     private javax.swing.JScrollPane scrollingArea;
     // End of variables declaration//GEN-END:variables
 
-    private void addDummyFunctions() {
+    private void showFunctions(Iterator<CinemaFunction> functions) {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (screenSize.width / 100) * 80;
         int heigth = (screenSize.width / 100) * 15;
-        
+
         Dimension functionPanelDimension = new Dimension(width, heigth);
-        
+
         BoxLayout layout = new BoxLayout(this.funtionListArea, BoxLayout.Y_AXIS);
         this.funtionListArea.setLayout(layout);
-        
+
         JLabel windowTitle = new JLabel("Funciones en Cartelera");
         windowTitle.setFont(new Font("Impact", Font.PLAIN, 70));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
         windowTitle.setForeground(Color.YELLOW);
         this.funtionListArea.add(windowTitle);
         this.funtionListArea.add(Box.createVerticalStrut(10));
-        
-        Cinema cinema = getDummyCinema();
-        Iterator<CinemaFunction> functions = cinema.getFunctions();
-        
+
         while (functions.hasNext()) {
-            
+
             CinemaFunction current = functions.next();
-            
+
             JPanel functionPanel = new JPanel();
             setSize(functionPanel, functionPanelDimension);
             functionPanel.setBackground(Color.WHITE);
@@ -175,7 +174,7 @@ public class Functions extends javax.swing.JFrame {
             //Movie Title
             JPanel panelTitle = new JPanel();
             panelTitle.setBackground(Color.RED.darker().darker());
-            panelTitle.setForeground(Color.WHITE);            
+            panelTitle.setForeground(Color.WHITE);
             JLabel movieTitle = new JLabel(current.getMovie().getMovieName());
             movieTitle.setForeground(Color.WHITE);
             movieTitle.setFont(new Font("Century Gothic", Font.PLAIN, 40));
@@ -204,56 +203,75 @@ public class Functions extends javax.swing.JFrame {
             panelAction.setBackground(Color.BLACK);
             JButton btn = new JButton("Comprar boletos");
             btn.setActionCommand(current.getMovie().getMovieID());
-            btn.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    JOptionPane.showMessageDialog(null, "You clicked : " + e.getActionCommand());
-                }
-            });
+            btn.addActionListener(this);
             panelAction.add(Box.createHorizontalGlue());
             btn.setMargin(new Insets(5, 5, 5, 5));
             panelAction.setBorder(new EmptyBorder(new Insets(10, 0, 10, 10)));
             panelAction.add(btn);
             functionControls.add(panelAction);
-            
+
             functionPanel.add(functionPoster);
             functionPanel.add(functionControls);
             this.funtionListArea.add(functionPanel);
             this.funtionListArea.add(Box.createVerticalStrut(20));
         }
     }
-    
+
     private void setSize(Component component, Dimension dimension) {
         component.setMinimumSize(dimension);
         component.setPreferredSize(dimension);
         component.setSize(dimension);
         component.setMaximumSize(dimension);
     }
-    
-    private static Cinema getDummyCinema() {
-        Cinema cinema = new Cinema("Cinepolis");
-        
+
+    private static CinemaManager getDummyCinemaManager() {
+        CinemaManager manager = CinemaManager.getInstance();
+
         Movie avengers = new Movie("0", "Avengers The Movie", "A film about hulk and shit");
         Room roomOne = new Room(5, 10);
+
         CinemaFunction avengersFunction = new CinemaFunction(roomOne, avengers, "4:00PM - 6:00PM");
-        
+
         Movie zootopia = new Movie("1", "Zootopia", "The sloth is awesome");
         Room roomTwo = new Room(5, 10);
+
         CinemaFunction zootopiaFunction = new CinemaFunction(roomTwo, zootopia, "4:00PM - 6:00PM");
-        
+
         Movie deadpool = new Movie("2", "Deadpool", "Fucking deadpool");
         Room roomThree = new Room(5, 10);
+
         CinemaFunction deadpoolFunction = new CinemaFunction(roomThree, deadpool, "4:00PM - 6:00PM");
-        
+
         Movie reenevant = new Movie("3", "The Reenevant", "Leo won a Oscar");
         Room roomFour = new Room(5, 10);
         CinemaFunction reenevantFunction = new CinemaFunction(roomFour, reenevant, "4:00PM - 6:00PM");
+
+        manager.add(avengersFunction);
+        manager.add(zootopiaFunction);
+        manager.add(deadpoolFunction);
+        manager.add(reenevantFunction);
+
+        changeSeatStates(avengers.getMovieID(), roomOne, 13);
+        changeSeatStates(zootopia.getMovieID(), roomTwo, 10);
+        changeSeatStates(deadpool.getMovieID(), roomThree, 20);
+        changeSeatStates(reenevant.getMovieID(), roomFour, 40);
         
-        cinema.addFunction(avengersFunction);
-        cinema.addFunction(zootopiaFunction);
-        cinema.addFunction(deadpoolFunction);
-        cinema.addFunction(reenevantFunction);
-        
-        return cinema;
+        return manager;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        DialogSeats dialogSeats = new DialogSeats(this, true, e.getActionCommand());
+        dialogSeats.setVisible(true);
+    }
+
+    private static void changeSeatStates(String itemID, Room room, int seatsNumber) {
+        Random randomGen = new Random();
+        for (int i = 0; i <= seatsNumber; i++) {
+            int state = randomGen.nextInt(4);
+            int row = randomGen.nextInt(room.getRows());
+            int column = randomGen.nextInt(room.getColumns());
+            CinemaManager.getInstance().changeSeatState(itemID, row, column, state);
+        }
     }
 }
