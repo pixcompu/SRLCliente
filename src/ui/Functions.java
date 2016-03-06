@@ -1,5 +1,6 @@
 package ui;
 
+import com.sun.java.swing.plaf.motif.MotifBorders;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -18,8 +19,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import logic.Cinema;
 import logic.CinemaFunction;
 import logic.Movie;
@@ -39,8 +41,8 @@ public class Functions extends javax.swing.JFrame {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(screenSize);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        this.funtionListArea.setBackground(Color.BLUE.darker().darker());
-
+        this.funtionListArea.setBackground(Color.BLUE.darker().darker().darker());
+        
         addDummyFunctions();
     }
 
@@ -129,30 +131,31 @@ public class Functions extends javax.swing.JFrame {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (screenSize.width / 100) * 80;
         int heigth = (screenSize.width / 100) * 15;
-
+        
         Dimension functionPanelDimension = new Dimension(width, heigth);
-
+        
         BoxLayout layout = new BoxLayout(this.funtionListArea, BoxLayout.Y_AXIS);
         this.funtionListArea.setLayout(layout);
-
+        
         JLabel windowTitle = new JLabel("Funciones en Cartelera");
-        windowTitle.setFont(new Font("Arial", Font.PLAIN, 70));
+        windowTitle.setFont(new Font("Impact", Font.PLAIN, 70));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
         windowTitle.setForeground(Color.YELLOW);
         this.funtionListArea.add(windowTitle);
         this.funtionListArea.add(Box.createVerticalStrut(10));
-
+        
         Cinema cinema = getDummyCinema();
         Iterator<CinemaFunction> functions = cinema.getFunctions();
         
-        while ( functions.hasNext() ) {
+        while (functions.hasNext()) {
             
             CinemaFunction current = functions.next();
             
             JPanel functionPanel = new JPanel();
             setSize(functionPanel, functionPanelDimension);
             functionPanel.setBackground(Color.WHITE);
-            functionPanel.setLayout(new BoxLayout(functionPanel,BoxLayout.X_AXIS));
+            functionPanel.setLayout(new BoxLayout(functionPanel, BoxLayout.X_AXIS));
+            functionPanel.setBorder(new LineBorder(Color.YELLOW));
 
             //Poster of each.
             JLabel functionPoster = new JLabel();
@@ -161,38 +164,57 @@ public class Functions extends javax.swing.JFrame {
             Image scaledImage = poster.getImage().getScaledInstance(180, heigth, Image.SCALE_DEFAULT);
             functionPoster.setIcon(new ImageIcon(scaledImage));
             setSize(functionPoster, posterDimension);
-            
+
             //Information
             JPanel functionControls = new JPanel();
             Dimension controlsDimension = new Dimension(functionPanelDimension.width - 180, heigth);
             setSize(functionControls, controlsDimension);
-            functionControls.setBackground(Color.WHITE);
-            functionControls.setLayout(new BoxLayout(functionControls,BoxLayout.Y_AXIS));
-            
+            functionControls.setBackground(Color.BLACK);
+            functionControls.setLayout(new BoxLayout(functionControls, BoxLayout.Y_AXIS));
+
             //Movie Title
+            JPanel panelTitle = new JPanel();
+            panelTitle.setBackground(Color.RED.darker().darker());
+            panelTitle.setForeground(Color.WHITE);            
             JLabel movieTitle = new JLabel(current.getMovie().getMovieName());
-            movieTitle.setFont(new Font("Arial", Font.PLAIN, 30));
-            movieTitle.setAlignmentX(CENTER_ALIGNMENT);
-            functionControls.add(movieTitle);
-            
+            movieTitle.setForeground(Color.WHITE);
+            movieTitle.setFont(new Font("Century Gothic", Font.PLAIN, 40));
+            panelTitle.add(movieTitle);
+            functionControls.add(panelTitle);
+
             //Movie Description
-            JLabel movieDescription = new JLabel(current.getMovie().getMovieName());
-            functionControls.add(movieDescription);
-            
+            JPanel panelDescription = new JPanel();
+            panelDescription.setBackground(Color.RED.darker().darker().darker());
+            JLabel movieDescription = new JLabel("\"" + current.getMovie().getMovieDescription() + "\"");
+            movieDescription.setForeground(Color.WHITE);
+            panelDescription.add(movieDescription);
+            functionControls.add(panelDescription);
+
             //Movie Schedule
+            JPanel panelSchedule = new JPanel();
+            panelSchedule.setBackground(Color.RED.darker().darker().darker().darker());
             JLabel movieSchedule = new JLabel(current.getSchedule());
-            functionControls.add(movieSchedule);
-            
+            movieSchedule.setForeground(Color.WHITE);
+            panelSchedule.add(movieSchedule);
+            functionControls.add(panelSchedule);
+
             //Button
+            JPanel panelAction = new JPanel();
+            panelAction.setLayout(new BoxLayout(panelAction, BoxLayout.X_AXIS));
+            panelAction.setBackground(Color.BLACK);
             JButton btn = new JButton("Comprar boletos");
             btn.setActionCommand(current.getMovie().getMovieID());
-            btn.addActionListener(new ActionListener(){
+            btn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     JOptionPane.showMessageDialog(null, "You clicked : " + e.getActionCommand());
                 }
             });
-            functionControls.add(btn);
+            panelAction.add(Box.createHorizontalGlue());
+            btn.setMargin(new Insets(5, 5, 5, 5));
+            panelAction.setBorder(new EmptyBorder(new Insets(10, 0, 10, 10)));
+            panelAction.add(btn);
+            functionControls.add(panelAction);
             
             functionPanel.add(functionPoster);
             functionPanel.add(functionControls);
@@ -200,7 +222,7 @@ public class Functions extends javax.swing.JFrame {
             this.funtionListArea.add(Box.createVerticalStrut(20));
         }
     }
-
+    
     private void setSize(Component component, Dimension dimension) {
         component.setMinimumSize(dimension);
         component.setPreferredSize(dimension);
