@@ -132,7 +132,7 @@ public class FormCinemaFunctions extends javax.swing.JFrame implements ActionLis
     private void showFunctions(Iterator<CinemaFunction> functions) {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (screenSize.width / 100) * 80;
-        int heigth = (screenSize.width / 100) * 15;
+        int heigth = (screenSize.height / 100) * 30;
 
         Dimension functionPanelDimension = new Dimension(width, heigth);
 
