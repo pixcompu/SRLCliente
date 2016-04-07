@@ -74,6 +74,7 @@ public class SeatsHandler implements ActionListener {
         int value = Integer.parseInt(serverMessage.split(":")[3]);
         if (roomId == this.roomID) {
             actualUI.updateSeatColor(row, column, value);
+            seatsState[row][column] = value;
         }
     }
 
@@ -103,6 +104,7 @@ public class SeatsHandler implements ActionListener {
     private void markAsSelected(int row, int column) {
         try {
             manager.changeSeatState(roomID, row, column, SeatState.SELECTED);
+            seatsState[row][column] = SeatState.SELECTED;
             prePurchased.add(row + ":" + column);
             actualUI.updateSeatColor(row, column, SeatState.SELECTED_USER);
         } catch (Exception ex) {
@@ -114,10 +116,12 @@ public class SeatsHandler implements ActionListener {
     private void markAsFree(int row, int column) {
         try {
             manager.changeSeatState(roomID, row, column, SeatState.FREE);
+            seatsState[row][column] = SeatState.FREE;
             prePurchased.remove(row + ":" + column);
             actualUI.updateSeatColor(row, column, SeatState.FREE);
         } catch (Exception ex) {
             Notifier.showMesage("Hubo un problema al procesar su seleccion");
         }
     }
+
 }
