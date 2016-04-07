@@ -1,30 +1,39 @@
 package logic;
 
+import java.io.Serializable;
+
 /**
  *
  * @author PIX
  */
-public class Movie {
-    private final String movieID;
-    private final String movieName;
-    private final String movieDescription;
+public class Movie implements Serializable {
+    private int id;
+    private String name;
+    private String description;
 
-    public Movie(String movieID, String movieName, String movieDescription) {
-        this.movieID = movieID;
-        this.movieName = movieName;
-        this.movieDescription = movieDescription;
+    public int getId() {
+        return id;
     }
 
-    public String getMovieID() {
-        return movieID;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public String getMovieName() {
-        return movieName;
+    public String getName() {
+        return name;
     }
 
-    public String getMovieDescription() {
-        return movieDescription;
+    public void setName(String name) {
+        this.name = name;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     
 }

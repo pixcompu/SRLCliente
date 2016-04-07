@@ -1,6 +1,7 @@
 package ui;
 
 import java.awt.Color;
+import java.awt.Component;
 import static java.awt.Component.CENTER_ALIGNMENT;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -10,8 +11,9 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -21,119 +23,81 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import logic.CinemaFunction;
-import logic.CinemaManager;
+import remote.RemoteConection;
 import logic.Room;
 import logic.SeatState;
+import ui.util.Notifier;
+import ui.util.ThemeValues;
 
 /**
  *
  * @author PIX
  */
-public class DialogSeats extends JDialog implements ActionListener {
+public class DialogSeats extends JDialog {
 
-    private final JPanel content;
-    private final JButton[][] seats;
-    private final Set<String> purchased;
+    private final JPanel content = new JPanel();
+    private JButton[][] seats;
+    private final SeatsHandler seatsHandler;
     private final CinemaFunction function;
+    private final ThemeValues theme = ThemeValues.getInstance();
 
-    public DialogSeats(Frame owner, boolean modal, String itemID) {
+    public DialogSeats(Frame owner, boolean modal, CinemaFunction selected) {
         super(owner, modal);
+        configureWindow();
+        addHeader("Seleccione los asientos que desea comprar");
+        function = selected;
+        seatsHandler = new SeatsHandler(this);
 
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = screenSize.width / 2;
-        int heigth = screenSize.height / 2;
-        content = new JPanel();
-        Dimension modalDimension = new Dimension(width, heigth);
-        content.setSize(modalDimension);
-        content.setMaximumSize(modalDimension);
-        content.setMinimumSize(modalDimension);
-        content.setPreferredSize(modalDimension);
-        
-        function = CinemaManager.getInstance().getById(itemID);
-        Room functionRoom = function.getRoom();
-        setTitle("Asientos de la Sala");
-        int[][] seatsState = functionRoom.getSeats();
-        int rows = functionRoom.getRows();
-        int columns = functionRoom.getColumns();
-        seats = new JButton[rows][columns];
-        purchased = new HashSet<>();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.add(Box.createVerticalGlue());
-        
-        JLabel windowTitle = new JLabel("Seleccione los asientos que desea comprar");
-        
-        windowTitle.setFont(new Font("Impact", Font.PLAIN, 20));
-        windowTitle.setAlignmentX(CENTER_ALIGNMENT);
-        windowTitle.setForeground(Color.YELLOW);
-        content.add(windowTitle);
-        JPanel panelSeats = getSeats(seatsState, rows, columns);
-         content.add(Box.createVerticalGlue());
-        panelSeats.setAlignmentX(CENTER_ALIGNMENT);
-        content.add(panelSeats);
-        
-        JPanel panelBtn = new JPanel();
-        panelBtn.setLayout(new BoxLayout(panelBtn, BoxLayout.X_AXIS));
-        JButton btnPurchase = new JButton("Comprar Seleccionados");
-        btnPurchase.addActionListener(this);
-        btnPurchase.setMargin(new Insets(5, 5, 5, 5));
-        btnPurchase.setAlignmentX(RIGHT_ALIGNMENT);
-        panelBtn.add(Box.createHorizontalGlue());
-        panelBtn.add(btnPurchase);
-        panelBtn.setBorder(new EmptyBorder(new Insets(10, 0, 10, 10)));
-        panelBtn.setBackground(Color.BLUE.darker().darker().darker());
-        content.add(panelBtn);
-        setContentPane(content);
-        content.setBackground(Color.BLUE.darker().darker());
-        this.pack();
-        this.setLocationRelativeTo(null);
+        try {
+            seatsHandler.connect();
+            Room room = seatsHandler.refreshRoom(selected.getRoom().getId());
+            JPanel seatsArea = getSeats(room);
+            JPanel controls = getControlsPanel();
+            content.add(Box.createVerticalGlue());
+            content.add(seatsArea);
+            content.add(controls);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Notifier.showMesage("Hubo un problema con la conexion");
+        }
+        pack();
+        setLocationRelativeTo(null);
     }
 
-    private JPanel getSeats(int[][] seatsState, int rows, int columns) {
+    public void showPurchseDialog(Set<String> items) {
+        DialogPurchase dialogPurchase = new DialogPurchase(this, true, items, function);
+        dialogPurchase.setVisible(true);
+        dispose();
+    }
+    
+    public void updateSeatColor(int row, int column, int newState){
+        seats[row][column].setBackground(getColor(newState));
+    }
+
+    private JPanel getSeats(Room room) {
         JPanel panelSeats = new JPanel();
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = ((screenSize.width / 2)/100)*90;
-        int heigth = ((screenSize.height / 2)/100)*80;
-        Dimension seatsDimension = new Dimension(width, heigth);
-        
-        panelSeats.setSize(seatsDimension);
-        panelSeats.setMinimumSize(seatsDimension);
-        panelSeats.setMaximumSize(seatsDimension);
-        panelSeats.setPreferredSize(seatsDimension);
-        panelSeats.setBackground(Color.WHITE);
-        
+        int[][] seatsState = room.getSeats();
+        int rows = room.getRows();
+        int columns = room.getColumns();
+        seats = new JButton[rows][columns];
         panelSeats.setAlignmentX(CENTER_ALIGNMENT);
-        
+        Dimension seatsDimension = getSeatsAreaSize();
+        this.setSize(panelSeats, seatsDimension);
+        panelSeats.setBackground(Color.WHITE);
+        panelSeats.setAlignmentX(CENTER_ALIGNMENT);
         panelSeats.setLayout(new GridLayout(rows, columns));
 
+        String buttonText = " ";
+        String actionTextTemplate = "%d:%d";
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                seats[i][j] = new JButton(" ");
-                seats[i][j].setActionCommand(i + ":" + j);
-                seats[i][j].addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        String coordinates = e.getActionCommand();
-                        int row = Integer.parseInt(coordinates.split(":", 2)[0]);
-                        int column = Integer.parseInt(coordinates.split(":", 2)[1]);
-
-                        if (seatsState[row][column] == SeatState.FREE) {
-                            seats[row][column].setBackground(getColor(SeatState.SELECTED_USER));
-                            CinemaManager.getInstance().changeSeatState(function.getMovie().getMovieID(), row, column, SeatState.SELECTED);
-                            purchased.add(coordinates);
-                        } else if(purchased.contains(coordinates)) {
-                            seats[row][column].setBackground(getColor(SeatState.FREE));
-                            CinemaManager.getInstance().changeSeatState(function.getMovie().getMovieID(), row, column, SeatState.FREE);
-                            purchased.remove(coordinates);
-                        }else{
-                            JOptionPane.showMessageDialog(null, "No puedes seleccionar este asiento");
-                        }
-                    }
-                });
+                seats[i][j] = new JButton(buttonText);
+                seats[i][j].setActionCommand(String.format(actionTextTemplate, i, j));
+                seats[i][j].addActionListener(seatsHandler);
                 seats[i][j].setBackground(getColor(seatsState[i][j]));
                 panelSeats.add(seats[i][j]);
             }
         }
-
         return panelSeats;
     }
 
@@ -154,14 +118,52 @@ public class DialogSeats extends JDialog implements ActionListener {
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (purchased.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No has seleccionado nada");
-        } else {
-            DialogPurchase dialogPurchase = new DialogPurchase(this, true, purchased);
-            dialogPurchase.setVisible(true);
-            dispose();
-        }
+    private void setSize(Component component, Dimension dimension) {
+        component.setMinimumSize(dimension);
+        component.setPreferredSize(dimension);
+        component.setSize(dimension);
+        component.setMaximumSize(dimension);
+    }
+
+    private void configureWindow() {
+        Dimension screenSize = theme.getScreenSize();
+        int width = screenSize.width / 2;
+        int heigth = screenSize.height / 2;
+        Dimension modalDimension = new Dimension(width, heigth);
+        setSize(content, modalDimension);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(theme.getBackgroundColor());
+        content.add(Box.createVerticalGlue());
+        setTitle("Asientos de la Sala");
+        setContentPane(content);
+    }
+
+    private void addHeader(String title) {
+        JLabel windowTitle = new JLabel(title);
+        windowTitle.setFont(new Font("Impact", Font.PLAIN, 20));
+        windowTitle.setAlignmentX(CENTER_ALIGNMENT);
+        windowTitle.setForeground(Color.YELLOW);
+        content.add(windowTitle);
+    }
+
+    private JPanel getControlsPanel() {
+        JPanel panelBtn = new JPanel();
+        panelBtn.setLayout(new BoxLayout(panelBtn, BoxLayout.X_AXIS));
+        JButton btnPurchase = new JButton("Comprar Seleccionados");
+        btnPurchase.addActionListener(seatsHandler.getPrePurchaseHandler());
+        btnPurchase.setMargin(new Insets(5, 5, 5, 5));
+        btnPurchase.setAlignmentX(RIGHT_ALIGNMENT);
+        panelBtn.add(Box.createHorizontalGlue());
+        panelBtn.add(btnPurchase);
+        panelBtn.setBorder(new EmptyBorder(new Insets(10, 0, 10, 10)));
+        panelBtn.setBackground(theme.getBackgroundColor());
+        return panelBtn;
+    }
+
+    private Dimension getSeatsAreaSize() {
+        Dimension screenSize = theme.getScreenSize();
+        int width = ((screenSize.width / 2) / 100) * 90;
+        int heigth = ((screenSize.height / 2) / 100) * 80;
+        return new Dimension(width, heigth);
     }
 }
