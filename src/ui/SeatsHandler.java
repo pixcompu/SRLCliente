@@ -59,11 +59,22 @@ public class SeatsHandler implements ActionListener {
     public void connect() throws Exception {
         client = new RemoteClient();
         client.connect();
+        client.setObserver(this);
         manager = RemoteConection.getInstance().getRemoteObject();
     }
 
     public ActionListener getPrePurchaseHandler() {
         return prePurchaseHandler;
+    }
+
+    public void update(String serverMessage) {
+        int roomId = Integer.parseInt(serverMessage.split(":")[0]);
+        int row = Integer.parseInt(serverMessage.split(":")[1]);
+        int column = Integer.parseInt(serverMessage.split(":")[2]);
+        int value = Integer.parseInt(serverMessage.split(":")[3]);
+        if (roomId == this.roomID) {
+            actualUI.updateSeatColor(row, column, value);
+        }
     }
 
     @Override
