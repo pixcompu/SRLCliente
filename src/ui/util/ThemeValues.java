@@ -32,8 +32,8 @@ public class ThemeValues {
         return new Dimension(screenWidth, screenHeight);
     }
 
-    public Font getHeaderFont() {
-        return new Font("Impact", Font.PLAIN, 70);
+    public Font getHeaderFont(int size) {
+        return new Font("Impact", Font.PLAIN, size);
     }
     
     public Color getBackgroundColor(){

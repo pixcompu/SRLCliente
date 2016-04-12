@@ -8,22 +8,15 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import logic.CinemaFunction;
-import remote.RemoteConection;
 import logic.Room;
 import logic.SeatState;
 import ui.util.Notifier;
@@ -33,13 +26,14 @@ import ui.util.ThemeValues;
  *
  * @author PIX
  */
-public class DialogSeats extends JDialog {
+public class DialogSeats extends JDialog{
 
     private final JPanel content = new JPanel();
     private JButton[][] seats;
     private final SeatsHandler seatsHandler;
     private final CinemaFunction function;
     private final ThemeValues theme = ThemeValues.getInstance();
+    private JLabel timerLabel;
 
     public DialogSeats(Frame owner, boolean modal, CinemaFunction selected) {
         super(owner, modal);
@@ -56,6 +50,7 @@ public class DialogSeats extends JDialog {
             content.add(Box.createVerticalGlue());
             content.add(seatsArea);
             content.add(controls);
+            addWindowListener(seatsHandler);
         } catch (Exception ex) {
             ex.printStackTrace();
             Notifier.showMesage("Hubo un problema con la conexion");
@@ -72,6 +67,10 @@ public class DialogSeats extends JDialog {
     
     public void updateSeatColor(int row, int column, int newState){
         seats[row][column].setBackground(getColor(newState));
+    }
+    
+    public void setTimerText(String text){
+        timerLabel.setText(text);
     }
 
     private JPanel getSeats(Room room) {
@@ -140,7 +139,7 @@ public class DialogSeats extends JDialog {
 
     private void addHeader(String title) {
         JLabel windowTitle = new JLabel(title);
-        windowTitle.setFont(new Font("Impact", Font.PLAIN, 20));
+        windowTitle.setFont(theme.getHeaderFont(20));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
         windowTitle.setForeground(Color.YELLOW);
         content.add(windowTitle);
@@ -153,6 +152,12 @@ public class DialogSeats extends JDialog {
         btnPurchase.addActionListener(seatsHandler.getPrePurchaseHandler());
         btnPurchase.setMargin(new Insets(5, 5, 5, 5));
         btnPurchase.setAlignmentX(RIGHT_ALIGNMENT);
+        
+        timerLabel = new JLabel("--:--");
+        timerLabel.setForeground(Color.YELLOW);
+        timerLabel.setFont(theme.getHeaderFont(20));
+        panelBtn.add(Box.createHorizontalGlue());
+        panelBtn.add(timerLabel);
         panelBtn.add(Box.createHorizontalGlue());
         panelBtn.add(btnPurchase);
         panelBtn.setBorder(new EmptyBorder(new Insets(10, 0, 10, 10)));
@@ -166,4 +171,5 @@ public class DialogSeats extends JDialog {
         int heigth = ((screenSize.height / 2) / 100) * 80;
         return new Dimension(width, heigth);
     }
+    
 }

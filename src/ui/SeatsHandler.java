@@ -2,9 +2,15 @@ package ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import static java.lang.Thread.sleep;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import logic.Room;
 import logic.SeatState;
@@ -17,7 +23,7 @@ import ui.util.Notifier;
  *
  * @author PIX
  */
-public class SeatsHandler implements ActionListener {
+public class SeatsHandler extends WindowAdapter implements ActionListener, Runnable {
 
     private final Set<String> prePurchased;
     private RemoteClient client;
@@ -25,6 +31,10 @@ public class SeatsHandler implements ActionListener {
     private final DialogSeats actualUI;
     private int[][] seatsState;
     private int roomID;
+    private int timeRemaining;
+    private Thread timer;
+    private boolean TIMER_RUNNING = true;
+    private final int TIMEOUT_SECONDS = 50;
     private final ActionListener prePurchaseHandler = new ActionListener() {
 
         @Override
@@ -35,6 +45,7 @@ public class SeatsHandler implements ActionListener {
 
                 try {
                     prePurchaseSeats();
+                    stopTimer();
                     actualUI.showPurchseDialog(prePurchased);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, ex.getMessage());
@@ -45,8 +56,10 @@ public class SeatsHandler implements ActionListener {
     };
 
     public SeatsHandler(DialogSeats actualUI) {
+        this.timeRemaining = 50;
         this.actualUI = actualUI;
         prePurchased = new HashSet();
+
     }
 
     public Room refreshRoom(int id) throws RemoteException {
@@ -86,8 +99,11 @@ public class SeatsHandler implements ActionListener {
 
         if (seatsState[row][column] == SeatState.FREE) {
             markAsSelected(row, column);
+            startTimer();
+            restartTimer();
         } else if (prePurchased.contains(coordinates)) {
             markAsFree(row, column);
+            restartTimer();
         } else {
             Notifier.showMesage("No puedes seleccionar este asiento");
         }
@@ -124,4 +140,64 @@ public class SeatsHandler implements ActionListener {
         }
     }
 
+    @Override
+    public void windowClosing(WindowEvent e) {
+        undoAllSelections();
+        stopTimer();
+    }
+
+    @Override
+    public void run() {
+        while (TIMER_RUNNING) {
+            while (timeRemaining > 0) {
+                try {
+                    actualUI.setTimerText("Realize su compra en " + timeRemaining + " segundos, por favor");
+                    sleep(1000);
+                    timeRemaining--;
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(SeatsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (TIMER_RUNNING) {
+                undoAllSelections();
+                Notifier.showMesage("Pasaron 50 segundos desde tu ultima seleccion, ¡lo sentimos!");
+
+            }
+            TIMER_RUNNING = false;
+            actualUI.setTimerText("--:--");
+        }
+    }
+
+    public void startTimer() {
+        timeRemaining = TIMEOUT_SECONDS;
+        TIMER_RUNNING = true;
+        if (timer == null || !timer.isAlive()) {
+            timer = new Thread(this);
+            timer.start();
+        } 
+    }
+
+    public void restartTimer() {
+        if (prePurchased.size() > 0) {
+            timeRemaining = TIMEOUT_SECONDS;
+        } else {
+            stopTimer();
+        }
+    }
+
+    public void stopTimer() {
+        timeRemaining = 0;
+        TIMER_RUNNING = false;
+    }
+
+    private void undoAllSelections() {
+        boolean hasItemsSelected = prePurchased.size() > 0;
+        if (hasItemsSelected) {
+            try {
+                manager.changeSeatState(roomID, prePurchased, SeatState.FREE);
+            } catch (RemoteException ex) {
+                System.err.println("Error : " + ex.getMessage());
+            }
+        }
+    }
 }
