@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import static java.lang.Thread.sleep;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Set;
@@ -25,35 +24,35 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import logic.CinemaFunction;
+import logic.Observer;
 import remote.RemoteConection;
 import logic.SeatState;
 import ui.util.Notifier;
 import ui.util.TableModel;
 import ui.util.ThemeValues;
+import ui.util.Timer;
 
 /**
  *
  * @author PIX
  */
-public class DialogPurchase extends JDialog implements Runnable, WindowListener{
+public class DialogPurchase extends JDialog implements WindowListener, Observer {
 
     private final JPanel content;
     private final TableModel modeloTabla;
     private final JLabel timerLabel;
     private final ThemeValues theme = ThemeValues.getInstance();
-    private final int TIMEOUT_SECONDS = 300;
-    private int timeRemaining = 50;
-    private boolean TIMER_RUNNING = true;
+    private Timer timer;
+
     private final int roomID;
     private final Set<String> purchasedItems;
-    private Thread timer;
 
     public DialogPurchase(Dialog owner, boolean modal, Set<String> purchasedItems, CinemaFunction function) {
         super(owner, modal);
         content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(Color.BLUE.darker().darker());
-        
+
         roomID = function.getRoom().getId();
         this.purchasedItems = purchasedItems;
 
@@ -74,7 +73,7 @@ public class DialogPurchase extends JDialog implements Runnable, WindowListener{
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    stopTimer();
+                    timer.stop();
                     purchaseSeats(purchasedItems, function);
                     JOptionPane.showMessageDialog(null, "Comprado");
                     dispose();
@@ -99,7 +98,8 @@ public class DialogPurchase extends JDialog implements Runnable, WindowListener{
         content.add(panelBtn);
         setContentPane(content);
         addWindowListener(this);
-        startTimer();
+        timer = new Timer(300, this);
+        timer.start();
         pack();
         setLocationRelativeTo(null);
     }
@@ -156,59 +156,22 @@ public class DialogPurchase extends JDialog implements Runnable, WindowListener{
         }
     }
 
-   @Override
+    @Override
     public void windowClosing(WindowEvent e) {
         undoAllSelections();
-        stopTimer();
-        System.out.println("Bye");
-    }
-
-    @Override
-    public void run() {
-        while (TIMER_RUNNING) {
-            while (timeRemaining > 0) {
-                try {
-                    setTimerText("Confirme en " + timeRemaining + " segundos, por favor");
-                    sleep(1000);
-                    timeRemaining--;
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(SeatsHandler.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            if (TIMER_RUNNING) {
-                undoAllSelections();
-                Notifier.showMesage("Pasaron 50 segundos desde tu ultima seleccion, ¡lo sentimos!");
-
-            }
-            TIMER_RUNNING = false;
-            this.dispose();
-        }
-    }
-
-    public void startTimer() {
-        timeRemaining = TIMEOUT_SECONDS;
-        TIMER_RUNNING = true;
-        if (timer == null || !timer.isAlive()) {
-            timer = new Thread(this);
-            timer.start();
-        } 
-    }
-
-    public void stopTimer() {
-        timeRemaining = 0;
-        TIMER_RUNNING = false;
+        timer.stop();
     }
 
     private void undoAllSelections() {
-       
-            try {
-                RemoteConection.getInstance().getRemoteObject().changeSeatState(roomID, purchasedItems, SeatState.FREE);
-            } catch (RemoteException ex) {
-                System.err.println("Error : " + ex.getMessage());
-            } catch (Exception ex) {
+
+        try {
+            RemoteConection.getInstance().getRemoteObject().changeSeatState(roomID, purchasedItems, SeatState.FREE);
+        } catch (RemoteException ex) {
+            System.err.println("Error : " + ex.getMessage());
+        } catch (Exception ex) {
             Logger.getLogger(DialogPurchase.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
 
     private void setTimerText(String text) {
@@ -237,5 +200,23 @@ public class DialogPurchase extends JDialog implements Runnable, WindowListener{
 
     @Override
     public void windowDeactivated(WindowEvent e) {
+    }
+
+    @Override
+    public void update(int code, String message) {
+        switch( code ){
+            case Timer.TIME_OVER:
+                undoAllSelections();
+                Notifier.showMesage("Pasaron 300 segundos sin confirmacion, ¡lo sentimos!");
+                break;
+            case Timer.TIME_UPDATE:
+                setTimerText("Realize su compra en " + message + " segundos, por favor");
+                break;
+            case Timer.TIME_RESET:
+                this.dispose();
+                break;
+            default:
+                System.out.println("Codigo desconocido " + code);
+        }
     }
 }

@@ -25,7 +25,7 @@ public class RemoteClient implements Runnable {
             while (true) {
                 String line = inputStream.readUTF();
                 if( observer != null ){
-                    observer.update(line);
+                    observer.receiveMessage(line);
                 }
             }//end while
         }//end try//end try

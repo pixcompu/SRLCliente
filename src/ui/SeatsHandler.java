@@ -4,26 +4,24 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import static java.lang.Thread.sleep;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import logic.Observer;
 import logic.Room;
 import logic.SeatState;
 import remote.IRemoteMovie;
 import remote.RemoteClient;
 import remote.RemoteConection;
 import ui.util.Notifier;
+import ui.util.Timer;
 
 /**
  *
  * @author PIX
  */
-public class SeatsHandler extends WindowAdapter implements ActionListener, Runnable {
+public class SeatsHandler extends WindowAdapter implements ActionListener, Observer {
 
     private final Set<String> prePurchased;
     private RemoteClient client;
@@ -31,10 +29,8 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
     private final DialogSeats actualUI;
     private int[][] seatsState;
     private int roomID;
-    private int timeRemaining;
-    private Thread timer;
-    private boolean TIMER_RUNNING = true;
-    private final int TIMEOUT_SECONDS = 50;
+    private Timer timer;
+    
     private final ActionListener prePurchaseHandler = new ActionListener() {
 
         @Override
@@ -45,7 +41,7 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
 
                 try {
                     prePurchaseSeats();
-                    stopTimer();
+                    timer.stop();
                     actualUI.showPurchseDialog(prePurchased);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, ex.getMessage());
@@ -56,7 +52,7 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
     };
 
     public SeatsHandler(DialogSeats actualUI) {
-        this.timeRemaining = 50;
+        this.timer = new Timer(50, this);
         this.actualUI = actualUI;
         prePurchased = new HashSet();
 
@@ -80,7 +76,7 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
         return prePurchaseHandler;
     }
 
-    public void update(String serverMessage) {
+    public void receiveMessage(String serverMessage) {
         int roomId = Integer.parseInt(serverMessage.split(":")[0]);
         int row = Integer.parseInt(serverMessage.split(":")[1]);
         int column = Integer.parseInt(serverMessage.split(":")[2]);
@@ -96,14 +92,15 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
         String coordinates = e.getActionCommand();
         int row = Integer.parseInt(coordinates.split(":", 2)[0]);
         int column = Integer.parseInt(coordinates.split(":", 2)[1]);
-
+        
         if (seatsState[row][column] == SeatState.FREE) {
             markAsSelected(row, column);
-            startTimer();
-            restartTimer();
+            timer.start();
+            timer.restart( true );
         } else if (prePurchased.contains(coordinates)) {
             markAsFree(row, column);
-            restartTimer();
+            boolean hasItems = prePurchased.size() > 0;
+            timer.restart( hasItems );
         } else {
             Notifier.showMesage("No puedes seleccionar este asiento");
         }
@@ -143,51 +140,7 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
     @Override
     public void windowClosing(WindowEvent e) {
         undoAllSelections();
-        stopTimer();
-    }
-
-    @Override
-    public void run() {
-        while (TIMER_RUNNING) {
-            while (timeRemaining > 0) {
-                try {
-                    actualUI.setTimerText("Realize su compra en " + timeRemaining + " segundos, por favor");
-                    sleep(1000);
-                    timeRemaining--;
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(SeatsHandler.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            if (TIMER_RUNNING) {
-                undoAllSelections();
-                Notifier.showMesage("Pasaron 50 segundos desde tu ultima seleccion, ¡lo sentimos!");
-
-            }
-            TIMER_RUNNING = false;
-            actualUI.setTimerText("--:--");
-        }
-    }
-
-    public void startTimer() {
-        timeRemaining = TIMEOUT_SECONDS;
-        TIMER_RUNNING = true;
-        if (timer == null || !timer.isAlive()) {
-            timer = new Thread(this);
-            timer.start();
-        } 
-    }
-
-    public void restartTimer() {
-        if (prePurchased.size() > 0) {
-            timeRemaining = TIMEOUT_SECONDS;
-        } else {
-            stopTimer();
-        }
-    }
-
-    public void stopTimer() {
-        timeRemaining = 0;
-        TIMER_RUNNING = false;
+        timer.stop();
     }
 
     private void undoAllSelections() {
@@ -200,4 +153,24 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Runna
             }
         }
     }
+
+    @Override
+    public void update(int code, String message) {
+        switch( code ){
+            case Timer.TIME_OVER:
+                undoAllSelections();
+                Notifier.showMesage("Pasaron 50 segundos desde tu ultima seleccion, ¡lo sentimos!");
+                break;
+            case Timer.TIME_UPDATE:
+                actualUI.setTimerText("Realize su compra en " + message + " segundos, por favor");
+                break;
+            case Timer.TIME_RESET:
+                actualUI.setTimerText("--:--");
+                break;
+            default:
+                System.out.println("Codigo desconocido " + code);
+        }
+    }
+
+    
 }

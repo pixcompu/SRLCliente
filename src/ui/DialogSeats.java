@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import static java.awt.Component.CENTER_ALIGNMENT;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Insets;
@@ -111,7 +110,7 @@ public class DialogSeats extends JDialog{
             case SeatState.TAKEN:
                 return Color.RED;
             case SeatState.SELECTED_USER:
-                return Color.GRAY;
+                return Color.MAGENTA;
             default:
                 throw new AssertionError();
         }
