@@ -12,7 +12,7 @@ import java.rmi.registry.Registry;
 public class RemoteConection {
 
     private static final String MANAGER_OBJECT_NAME = "Movie";
-    private static final String MANAGER_OBJECT_IP_ADDRESS = "127.0.0.1";
+    private static final String MANAGER_OBJECT_IP_ADDRESS = "192.168.228.182";
     private static IRemoteMovie remoteObject;
     private static RemoteConection instance;
 

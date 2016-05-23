@@ -115,6 +115,10 @@ public class SeatsHandler extends WindowAdapter implements ActionListener, Obser
     }
 
     private void markAsSelected(int row, int column) {
+        if(prePurchased.size() == 5){
+            Notifier.showMesage("No puedes seleccionar mas de 5 asientos");
+            return;
+        }
         try {
             manager.changeSeatState(roomID, row, column, SeatState.SELECTED);
             seatsState[row][column] = SeatState.SELECTED;

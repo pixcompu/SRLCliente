@@ -1,6 +1,5 @@
 package remote;
 
-import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import ui.SeatsHandler;
@@ -13,7 +12,7 @@ import ui.SeatsHandler;
  */
 public class RemoteClient implements Runnable {
 
-    private final String CLIENT_IP_ADDRESS = "127.0.0.1";
+    private final String CLIENT_IP_ADDRESS = "192.168.228.182";
     private final int CLIENT_PORT = 1099;
     private SeatsHandler observer;
     protected DataInputStream inputStream;
