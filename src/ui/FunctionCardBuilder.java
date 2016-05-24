@@ -30,10 +30,7 @@ public class FunctionCardBuilder {
     private JPanel card;
     private final CinemaFunction function;
     private final JFrame actualUI;
-    private final Color BORDER_COLOR = Color.YELLOW;
-    private final Color ITEM_BACKGROUND_COLOR = Color.GREEN;
-    private final Color INFORMATION_FONT_COLOR = Color.WHITE;
-    private final Color BACKGROUND_COLOR = Color.BLACK;
+    private final ThemeValues theme;
     private final ActionListener selectionHandler = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -45,6 +42,7 @@ public class FunctionCardBuilder {
     public FunctionCardBuilder(JFrame actualUI, CinemaFunction function) {
         this.function = function;
         this.actualUI = actualUI;
+        this.theme = ThemeValues.getInstance();
     }
 
     public void build() {
@@ -62,9 +60,9 @@ public class FunctionCardBuilder {
     private JPanel getContainer() {
         JPanel functionPanel = new JPanel();
         setSize(functionPanel, getSize());
-        functionPanel.setBackground(ITEM_BACKGROUND_COLOR);
+        functionPanel.setBackground(theme.getCardGradientColor());
         functionPanel.setLayout(new BoxLayout(functionPanel, BoxLayout.X_AXIS));
-        functionPanel.setBorder(new LineBorder(BORDER_COLOR));
+        functionPanel.setBorder(new LineBorder(theme.getCardBorderColor()));
         return functionPanel;
     }
 
@@ -115,7 +113,7 @@ public class FunctionCardBuilder {
         JPanel information = new JPanel();
         Dimension informationSize = new Dimension(informationWidth, informationHeight);
         setSize(information, informationSize);
-        information.setBackground(BACKGROUND_COLOR);
+        information.setBackground(theme.getCardBackgroundColor());
         information.setLayout(new BoxLayout(information, BoxLayout.Y_AXIS));
 
         JPanel title = getTitlePanel(movie.getName());
@@ -133,10 +131,10 @@ public class FunctionCardBuilder {
 
     private JPanel getTitlePanel(String title) {
         JPanel panelTitle = new JPanel();
-        panelTitle.setBackground(ITEM_BACKGROUND_COLOR.darker().darker());
-        panelTitle.setForeground(INFORMATION_FONT_COLOR);
+        panelTitle.setBackground(theme.getCardGradientColor().darker().darker());
+        panelTitle.setForeground(theme.getCardFontColor());
         JLabel movieTitle = new JLabel(title);
-        movieTitle.setForeground(INFORMATION_FONT_COLOR);
+        movieTitle.setForeground(theme.getCardFontColor());
         movieTitle.setFont(getCardTitleFont());
         panelTitle.add(movieTitle);
         return panelTitle;
@@ -144,18 +142,18 @@ public class FunctionCardBuilder {
 
     private JPanel getDescriptionPanel(String description) {
         JPanel panelDescription = new JPanel();
-        panelDescription.setBackground(ITEM_BACKGROUND_COLOR.darker().darker().darker());
+        panelDescription.setBackground(theme.getCardGradientColor().darker().darker().darker());
         JLabel movieDescription = new JLabel("\"" + description + "\"");
-        movieDescription.setForeground(INFORMATION_FONT_COLOR);
+        movieDescription.setForeground(theme.getCardFontColor());
         panelDescription.add(movieDescription);
         return panelDescription;
     }
 
     private JPanel getSchedulePanel(String schedule) {
         JPanel panelSchedule = new JPanel();
-        panelSchedule.setBackground(ITEM_BACKGROUND_COLOR.darker().darker().darker().darker());
+        panelSchedule.setBackground(theme.getCardGradientColor().darker().darker().darker().darker());
         JLabel movieSchedule = new JLabel(schedule);
-        movieSchedule.setForeground(INFORMATION_FONT_COLOR);
+        movieSchedule.setForeground(theme.getCardFontColor());
         panelSchedule.add(movieSchedule);
         return panelSchedule;
     }
@@ -163,7 +161,7 @@ public class FunctionCardBuilder {
     private JPanel getControls() {
         JPanel panelAction = new JPanel();
         panelAction.setLayout(new BoxLayout(panelAction, BoxLayout.X_AXIS));
-        panelAction.setBackground(BACKGROUND_COLOR);
+        panelAction.setBackground(theme.getCardBackgroundColor());
         JButton btn = new JButton("Comprar boletos");
         btn.setActionCommand(String.valueOf(function.getMovie().getId()));
         panelAction.add(Box.createHorizontalGlue());

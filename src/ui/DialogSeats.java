@@ -140,7 +140,7 @@ public class DialogSeats extends JDialog{
         JLabel windowTitle = new JLabel(title);
         windowTitle.setFont(theme.getHeaderFont(20));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
-        windowTitle.setForeground(Color.YELLOW);
+        windowTitle.setForeground(theme.getWindowTitleColor());
         content.add(windowTitle);
     }
 
@@ -153,7 +153,7 @@ public class DialogSeats extends JDialog{
         btnPurchase.setAlignmentX(RIGHT_ALIGNMENT);
         
         timerLabel = new JLabel("--:--");
-        timerLabel.setForeground(Color.YELLOW);
+        timerLabel.setForeground(theme.getTimerTextColor());
         timerLabel.setFont(theme.getHeaderFont(20));
         panelBtn.add(Box.createHorizontalGlue());
         panelBtn.add(timerLabel);

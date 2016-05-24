@@ -43,6 +43,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
     private final JLabel timerLabel;
     private final ThemeValues theme = ThemeValues.getInstance();
     private Timer timer;
+    private final int TIME_LIMIT = 300; //In seconds
 
     private final int roomID;
     private final Set<String> purchasedItems;
@@ -51,7 +52,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
         super(owner, modal);
         content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBackground(Color.BLUE.darker().darker());
+        content.setBackground(theme.getBackgroundColor());
 
         roomID = function.getRoom().getId();
         this.purchasedItems = purchasedItems;
@@ -62,7 +63,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
 
         JPanel panelBtn = new JPanel();
         timerLabel = new JLabel("--:--");
-        timerLabel.setForeground(Color.YELLOW);
+        timerLabel.setForeground(theme.getTimerTextColor());
         timerLabel.setFont(theme.getHeaderFont(20));
         panelBtn.add(Box.createHorizontalGlue());
         panelBtn.add(timerLabel);
@@ -90,7 +91,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
         JLabel windowTitle = new JLabel("Resumen de Compra");
         windowTitle.setFont(theme.getHeaderFont(20));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
-        windowTitle.setForeground(Color.YELLOW);
+        windowTitle.setForeground(theme.getWindowTitleColor());
 
         content.add(Box.createVerticalGlue());
         content.add(windowTitle);
@@ -98,7 +99,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
         content.add(panelBtn);
         setContentPane(content);
         addWindowListener(this);
-        timer = new Timer(300, this);
+        timer = new Timer(TIME_LIMIT, this);
         timer.start();
         pack();
         setLocationRelativeTo(null);
@@ -143,7 +144,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
         itemPurchaseTicket.add(Box.createHorizontalGlue());
         itemPurchaseTicket.add(amount);
 
-        purchaseTicket.setBackground(Color.BLUE.darker().darker().darker());
+        purchaseTicket.setBackground(theme.getBackgroundColor());
         purchaseTicket.add(itemPurchaseTicket);
         return purchaseTicket;
     }
@@ -166,6 +167,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
 
         try {
             RemoteConection.getInstance().getRemoteObject().changeSeatState(roomID, purchasedItems, SeatState.FREE);
+            purchasedItems.clear();
         } catch (RemoteException ex) {
             System.err.println("Error : " + ex.getMessage());
         } catch (Exception ex) {
@@ -207,7 +209,7 @@ public class DialogPurchase extends JDialog implements WindowListener, Observer 
         switch( code ){
             case Timer.TIME_OVER:
                 undoAllSelections();
-                Notifier.showMesage("Pasaron 300 segundos sin confirmacion, ¡lo sentimos!");
+                Notifier.showMesage("Pasaron " + TIME_LIMIT + " segundos sin confirmacion, ¡lo sentimos!");
                 break;
             case Timer.TIME_UPDATE:
                 setTimerText("Realize su compra en " + message + " segundos, por favor");

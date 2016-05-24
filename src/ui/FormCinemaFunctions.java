@@ -116,7 +116,7 @@ public class FormCinemaFunctions extends javax.swing.JFrame {
         JLabel windowTitle = new JLabel(viewTitle);
         windowTitle.setFont(theme.getHeaderFont(70));
         windowTitle.setAlignmentX(CENTER_ALIGNMENT);
-        windowTitle.setForeground(Color.YELLOW);
+        windowTitle.setForeground(theme.getWindowTitleColor());
         this.funtionListArea.add(windowTitle);
         this.funtionListArea.add(Box.createVerticalStrut(10));
     }

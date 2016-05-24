@@ -4,15 +4,9 @@ import java.io.*;
 import java.net.Socket;
 import ui.SeatsHandler;
 
-/**
- * La caracteristica:
-
- Heterogeneidad Apertura outputStream extensibilidad. Seguridad. Escalabilidad.
- * Tolerancia a fallos. Concurrencia. Transparencia
- */
 public class RemoteClient implements Runnable {
 
-    private final String CLIENT_IP_ADDRESS = "192.168.228.182";
+    private final String CLIENT_IP_ADDRESS = "127.0.0.1";
     private final int CLIENT_PORT = 1099;
     private SeatsHandler observer;
     protected DataInputStream inputStream;
@@ -26,20 +20,20 @@ public class RemoteClient implements Runnable {
                 if( observer != null ){
                     observer.receiveMessage(line);
                 }
-            }//end while
-        }//end try//end try
+            }
+        }
         catch (IOException io) {
             io.printStackTrace();
-        }//end catch
+        }
         finally {
             listener = null;
             try {
                 outputStream.close();
-            }//end try//end try
+            }
             catch (IOException io) {
                 io.printStackTrace();
-            }//end catch
-        }//end finally
+            }
+        }
     }
 
     public void connect() throws Exception {

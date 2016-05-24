@@ -39,4 +39,28 @@ public class ThemeValues {
     public Color getBackgroundColor(){
         return Color.BLUE.darker().darker().darker();
     }
+    
+    public Color getCardGradientColor(){
+        return Color.RED;
+    }
+    
+    public Color getCardFontColor(){
+        return Color.WHITE;
+    }
+    
+    public Color getCardBackgroundColor(){
+        return Color.BLACK;
+    }
+    
+    public Color getCardBorderColor(){
+        return Color.YELLOW;
+    }
+    
+    public Color getWindowTitleColor(){
+        return Color.YELLOW;
+    }
+    
+    public Color getTimerTextColor(){
+        return Color.YELLOW;
+    }
 }
